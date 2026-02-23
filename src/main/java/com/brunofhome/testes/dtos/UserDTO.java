@@ -14,7 +14,6 @@ public class UserDTO {
 	}
 	
 	
-	
 	public UserDTO(Long id, String name, String username, String password) {
 		super();
 		this.id = id;

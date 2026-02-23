@@ -1,6 +1,11 @@
 package com.brunofhome.testes.controllers;
 
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,46 +14,47 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.brunofhome.testes.entities.User;
-import com.brunofhome.testes.repositories.UserRepository;
+import com.brunofhome.testes.dtos.UserDTO;
+import com.brunofhome.testes.services.UserService;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
 	@Autowired
-	private UserRepository repository;
-	
+	UserService service;
+
+	@GetMapping(value = "/{id}")
+	public ResponseEntity<UserDTO> findById(@PathVariable Long id) {
+		UserDTO dto = service.findById(id);
+		return ResponseEntity.ok(dto);
+	}
+
+	@GetMapping
+	public ResponseEntity<Page<UserDTO>> findAll(Pageable page) {
+		Page<UserDTO> dto = service.findAll(page);
+		return ResponseEntity.ok(dto);
+	}
+
 	@PostMapping
-	public User createUser(@RequestBody User user) {
-		return repository.save(user);
+	public ResponseEntity<UserDTO> insert(@RequestBody UserDTO dto) {
+		dto = service.insert(dto);
+		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(dto.getId()).toUri();
+		return ResponseEntity.created(uri).body(dto);
 	}
-	
-	@GetMapping("/{id}")
-	public User getUserById(@PathVariable Long id) {
-		return repository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
-	}
-	
-	@PutMapping("/{id}")
-    public User updateProduct(@PathVariable Long id, @RequestBody User userDetails) {
-		User user = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-		user.setName(userDetails.getName());
-		user.setUsername(userDetails.getUsername());
-		user.setPassword(userDetails.getPassword());
-
-        return repository.save(user);
-    }
-	
-	@DeleteMapping("/{id}")
-	public void deleteUser(@PathVariable Long id) {
-		repository.deleteById(id);
-		
+	@PutMapping(value = "/{id}")
+	public ResponseEntity<UserDTO> update(@PathVariable Long id,@RequestBody UserDTO dto) {
+		dto = service.update(dto, id);
+		return ResponseEntity.ok(dto);
 	}
-	
-	
-	
+
+	@DeleteMapping(value = "/{id}")
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		service.delete(id);
+		return ResponseEntity.noContent().build();
+	}
+
 }
